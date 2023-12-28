@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
+
 import { CreateTransactionDto } from './dto/create-transaction.dto'
 import { UpdateTransactionDto } from './dto/update-transaction.dto'
-import { InjectRepository } from '@nestjs/typeorm'
 import { Transaction } from './entities/transaction.entity'
-import { Repository } from 'typeorm'
 
 @Injectable()
 export class TransactionService {
@@ -43,7 +44,7 @@ export class TransactionService {
 	}
 
 	async findAllWithPagination(id: number, page: number, limit: number) {
-		const transaction = await this.transactionRepository.find({
+		return await this.transactionRepository.find({
 			where: {
 				user: { id },
 			},
@@ -57,7 +58,6 @@ export class TransactionService {
 			take: limit,
 			skip: (page - 1) * limit,
 		})
-		return transaction
 	}
 
 	async findOne(id: number) {
@@ -87,5 +87,16 @@ export class TransactionService {
 		})
 		if (!transaction) throw new NotFoundException('Transaction not found!')
 		return await this.transactionRepository.delete(id)
+	}
+
+	async findAllByType(id: number, type: string) {
+		const transactions = await this.transactionRepository.find({
+			where: {
+				user: { id },
+				type,
+			},
+		})
+
+		return transactions.reduce((acc, obj) => acc + obj.amount, 0)
 	}
 }
